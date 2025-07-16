@@ -1,0 +1,6 @@
+Flask==2.3.3
+Flask-CORS==4.0.0
+python-pptx==0.6.21
+Pillow==10.0.1
+gunicorn==21.2.0
+python-dotenv==1.0.1
