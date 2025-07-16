@@ -14,6 +14,9 @@ import time
 app = Flask(__name__)
 CORS(app)
 
+# Configure maximum file size (100MB)
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB in bytes
+
 # Configure upload folder
 UPLOAD_FOLDER = 'temp_files'
 if not os.path.exists(UPLOAD_FOLDER):
@@ -126,12 +129,19 @@ def upload_file():
     if not file.filename.lower().endswith(('.ppt', '.pptx')):
         return jsonify({'error': 'Please upload a PPT or PPTX file'}), 400
     
+    # Check file size (100MB limit)
+    if request.content_length and request.content_length > 100 * 1024 * 1024:
+        return jsonify({'error': 'File size must be less than 100MB'}), 400
+    
     try:
         # Generate unique filename
         file_id = str(uuid.uuid4())
         original_filename = file.filename
         temp_input = os.path.join(UPLOAD_FOLDER, f"{file_id}_input.pptx")
         temp_output = os.path.join(UPLOAD_FOLDER, f"{file_id}_output.pptx")
+        
+        # Set longer timeout for large files
+        app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 300  # 5 minutes
         
         # Save uploaded file
         file.save(temp_input)

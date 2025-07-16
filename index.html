@@ -210,7 +210,7 @@
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">📁</div>
             <div class="upload-text">Click to upload or drag & drop</div>
-            <div class="upload-subtext">Supports PPT and PPTX files (max 50MB)</div>
+            <div class="upload-subtext">Supports PPT and PPTX files (max 100MB)</div>
             <input type="file" id="fileInput" accept=".ppt,.pptx" />
         </div>
         
@@ -273,9 +273,9 @@
                 return;
             }
             
-            // Validate file size (50MB limit)
-            if (file.size > 50 * 1024 * 1024) {
-                showError('File size must be less than 50MB');
+            // Validate file size (100MB limit)
+            if (file.size > 100 * 1024 * 1024) {
+                showError('File size must be less than 100MB');
                 return;
             }
             
