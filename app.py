@@ -12,7 +12,7 @@ import threading
 import time
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["https://keen-creponne-d8adb1.netlify.app"])
 
 # Configure maximum file size (100MB)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB in bytes
