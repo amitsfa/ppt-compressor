@@ -61,51 +61,72 @@ def compress_image(image_data, quality=60):
         print(f"Image compression error: {e}")
         return image_data
 
-def compress_ppt(file_path, output_path):
-    """Compress PPT file by optimizing images and removing metadata"""
+def compress_ppt(input_path, output_path, quality=70, target_size=40 * 1024 * 1024):
+    """Compress PPTX by optimizing images and re-zipping contents"""
+
+    import shutil
+
+    temp_dir = tempfile.mkdtemp()
     try:
-        # Open the presentation
-        prs = Presentation(file_path)
-        
-        # Process each slide
-        for slide in prs.slides:
-            # Process shapes in the slide
-            for shape in slide.shapes:
-                if hasattr(shape, 'image'):
-                    try:
-                        # Get image data
-                        image_data = shape.image.blob
-                        
-                        # Compress the image
-                        compressed_data = compress_image(image_data, quality=70)
-                        
-                        # Replace the image (this is a simplified approach)
-                        # In practice, you might need more sophisticated image replacement
-                        print(f"Compressed image in slide, original size: {len(image_data)}, compressed: {len(compressed_data)}")
-                        
-                    except Exception as e:
-                        print(f"Error processing image in shape: {e}")
-                        continue
-        
-        # Save the compressed presentation
-        prs.save(output_path)
-        
-        # Get file sizes for comparison
-        original_size = os.path.getsize(file_path)
+        # 1. Extract pptx zip
+        with zipfile.ZipFile(input_path, 'r') as zip_ref:
+            zip_ref.extractall(temp_dir)
+
+        media_folder = os.path.join(temp_dir, 'ppt', 'media')
+        if os.path.exists(media_folder):
+            for fname in os.listdir(media_folder):
+                path = os.path.join(media_folder, fname)
+                if not fname.lower().endswith(('.jpg', '.jpeg', '.png')):
+                    continue
+                try:
+                    img = Image.open(path)
+
+                    # convert transparency to white background
+                    if img.mode in ('RGBA', 'LA', 'P'):
+                        bg = Image.new('RGB', img.size, (255, 255, 255))
+                        if img.mode == 'P':
+                            img = img.convert('RGBA')
+                        bg.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                        img = bg
+
+                    # compress to JPEG
+                    buf = io.BytesIO()
+                    img.save(buf, format='JPEG', quality=quality, optimize=True)
+
+                    with open(path, 'wb') as f:
+                        f.write(buf.getvalue())
+                except Exception as e:
+                    print(f"[Image Skipped] {fname}: {e}")
+                    continue
+
+        # 2. Rezip the folder into a new .pptx
+        with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for foldername, _, filenames in os.walk(temp_dir):
+                for filename in filenames:
+                    file_path = os.path.join(foldername, filename)
+                    archive_name = os.path.relpath(file_path, temp_dir)
+                    zipf.write(file_path, arcname=archive_name)
+
+        original_size = os.path.getsize(input_path)
         compressed_size = os.path.getsize(output_path)
-        
+
+        # 3. Retry with lower quality if still too big
+        if target_size and compressed_size > target_size and quality > 30:
+            print(f"Retrying compression: current size {compressed_size//1e6:.2f}MB, reducing quality")
+            return compress_ppt(input_path, output_path, quality=quality - 10, target_size=target_size)
+
         return {
             'success': True,
             'original_size': original_size,
             'compressed_size': compressed_size,
-            'compression_ratio': round((1 - compressed_size/original_size) * 100, 2)
+            'compression_ratio': round((1 - compressed_size / original_size) * 100, 2)
         }
-        
+
     except Exception as e:
-        return {
-            'success': False,
-            'error': str(e)
-        }
+        return {'success': False, 'error': str(e)}
+    finally:
+        shutil.rmtree(temp_dir)
+
 
 @app.route('/')
 def index():
@@ -147,7 +168,9 @@ def upload_file():
         file.save(temp_input)
         
         # Compress the file
-        result = compress_ppt(temp_input, temp_output)
+        # compress with target under 40MB
+        result = compress_ppt(temp_input, temp_output, quality=70, target_size=40 * 1024 * 1024)
+
         
         if result['success']:
             return jsonify({
