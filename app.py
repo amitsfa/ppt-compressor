@@ -76,7 +76,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app, origins=["https://remarkable-figolla-848618.netlify.app"])
+CORS(app, origins=["https://soft-florentine-1abc52.netlify.app/"])
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB limit
 
 UPLOAD_FOLDER = 'temp_files'
