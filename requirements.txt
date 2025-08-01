@@ -1,7 +1,39 @@
-Flask==2.3.3
-Flask-CORS==4.0.0
-python-pptx==0.6.21
-Pillow==10.0.1
+# Enhanced Document Compressor Requirements
+# ==========================================
+
+# Core Flask components
+Flask==3.0.0
+Flask-CORS==4.0.1  
 gunicorn==21.2.0
 python-dotenv==1.0.1
-lxml==4.9.3
+
+# Image processing (enhanced)
+Pillow==10.2.0
+
+# PDF processing engines
+PyMuPDF==1.23.24    # Advanced PDF manipulation and compression
+# Note: Ghostscript must be installed separately on the system
+# Ubuntu/Debian: apt-get install ghostscript
+# CentOS/RHEL: yum install ghostscript  
+# Alpine: apk add ghostscript
+# Railway: Use railway.toml with ghostscript buildpack
+
+# XML processing for Office documents
+lxml==5.1.0         # Fast XML parsing and optimization
+
+# Advanced compression
+zopfli==0.2.3       # Google's superior deflate compression
+# Alternative: python-zopfli==0.2.3
+
+# Office document processing  
+python-pptx==0.6.23 # PowerPoint manipulation (updated)
+
+# System utilities
+psutil==5.9.8       # System monitoring (optional)
+
+# Development and debugging
+Werkzeug==3.0.1     # WSGI utilities
+
+# Optional: For even better PDF compression
+# qpdf==           # Uncomment if qpdf Python bindings available
+# pikepdf==8.7.1   # Alternative PDF manipulation library
